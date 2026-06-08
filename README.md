@@ -9,6 +9,45 @@ PyScope é um observatório arquitetural para código Python. Ele foca em observ
 - produz resultados reproduzíveis e artefatos JSON
 - integra visualização Graphviz para inspeção do grafo
 
+## Pipeline: observe → visualize → store
+
+PyScope includes a minimal pipeline runner that reads a C1 JSON artifact, generates Graphviz artifacts, and stores results.
+
+Basic usage (local storage):
+
+```bash
+# install editable package
+pip install -e .
+
+# run pipeline using local storage
+pyscope run-pipeline \
+	--input-json tests/fixtures/c1_example.json \
+	--output-dir out \
+	--storage-dir storage
+```
+
+Using S3 as storage backend (requires `boto3` and AWS credentials):
+
+```bash
+pip install boto3
+
+pyscope run-pipeline \
+	--input-json tests/fixtures/c1_example.json \
+	--output-dir out \
+	--storage-dir storage \
+	--storage-backend s3 \
+	--s3-bucket my-bucket \
+	--s3-prefix pyscope
+```
+
+Artifacts produced:
+
+- `graph.dot` — Graphviz DOT source
+- `graph.svg` / `graph.png` — rendered images (when Graphviz is available)
+- `index.html` — simple HTML report referencing the images
+
+The CI workflow `./github/workflows/c1_pipeline.yml` runs the pipeline on `main` and uploads `out/` artifacts.
+
 ## Visualizador
 
 O módulo `pyscope.visualizer` converte um resultado C1 em um grafo Graphviz e gera um relatório HTML.
