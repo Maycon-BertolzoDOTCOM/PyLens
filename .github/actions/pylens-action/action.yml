@@ -1,0 +1,60 @@
+name: 'PyLens Architectural Review'
+description: 'Analyze Python code architecture and post review comments on PRs'
+
+inputs:
+  pr-number:
+    description: 'PR number to analyze (auto-detected if not provided)'
+    required: false
+  fail-on-regression:
+    description: 'Fail the workflow if architectural regression is detected'
+    required: false
+    default: 'false'
+  token:
+    description: 'GitHub token'
+    required: true
+    default: ${{ github.token }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install PyLens
+      shell: bash
+      run: |
+        pip install -e ${{ github.workspace }}
+
+    - name: Install gh-pylens
+      shell: bash
+      run: |
+        # Build Go binary
+        cd ${{ github.workspace }}/cmd/pylens
+        go build -o /usr/local/bin/gh-pylens .
+
+    - name: Run PyLens Review
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+      run: |
+        PR_ARG=""
+        if [ -n "${{ inputs.pr-number }}" ]; then
+          PR_ARG="--pr ${{ inputs.pr-number }}"
+        fi
+
+        gh-pylens review $PR_ARG
+
+    - name: Check for Regressions
+      if: inputs.fail-on-regression == 'true'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+      run: |
+        PR_ARG=""
+        if [ -n "${{ inputs.pr-number }}" ]; then
+          PR_ARG="--pr ${{ inputs.pr-number }}"
+        fi
+
+        gh-pylens check $PR_ARG --strict

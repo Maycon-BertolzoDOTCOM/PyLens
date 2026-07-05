@@ -1,0 +1,23 @@
+name: PyLens Review
+
+on:
+  pull_request:
+    paths:
+      - '**/*.py'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PyLens Review
+        uses: ./.github/actions/pylens-action
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fail-on-regression: false
